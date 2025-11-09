@@ -86,6 +86,16 @@ Modernized Warehouse Management dashboard built with the MERN stack. The React c
 - Reusable modal and toast components for consistent UX.
 - Settings, inbound, and outbound sections retain the original layouts.
 
+## Realtime Phone-to-PC Scanner Demo
+
+Need a dedicated sample that links a phone scanner to a desktop dashboard through Socket.io? Check out `examples/realtime-scanner/`. It contains:
+
+- Minimal Express + Socket.io backend (`server/`) that logs connections and rebroadcasts `barcodeScanned` payloads as `barcodeReceived`.
+- Vite + React frontend (`client/`) with two routes: `/dashboard` (desktop modal) and `/scanner` (mobile `html5-qrcode` camera).
+- Optional pairing code so only the intended dashboard receives scans.
+
+Follow the README in that folder for install/run steps.
+
 ## Testing & Deployment Notes
 
 - For production deployment, host the Express server and React bundle separately or behind the same domain. Update `VITE_API_BASE_URL` (or configure a reverse proxy) accordingly.
