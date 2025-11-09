@@ -58,6 +58,8 @@ Modernized Warehouse Management dashboard built with the MERN stack. The React c
 
    Vite serves the client at `http://localhost:5173` and proxies `/api` calls to the Express server.
 
+   > NOTE: When testing from phones or other machines on your network, make sure your OS firewall allows inbound traffic on the API port (default `5000`) and Vite port (`5173`).
+
 ## Environment Variables
 
 | File          | Variable       | Description                                |

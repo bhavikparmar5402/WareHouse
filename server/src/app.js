@@ -8,16 +8,9 @@ import activitiesRouter from './routes/activities.js';
 
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://192.168.1.21:5173',
-  process.env.CLIENT_URL
-].filter(Boolean);
-
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (_origin, callback) => callback(null, true),
     credentials: true,
   })
 );
@@ -53,3 +46,4 @@ app.use((err, _req, res, _next) => {
 });
 
 export default app;
+
