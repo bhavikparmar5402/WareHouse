@@ -16,7 +16,7 @@ const resolveBaseUrl = () => {
 
 const apiClient = axios.create({
   // baseURL: resolveBaseUrl(),
-  baseURL: '/api',
+  baseURL: 'https://warehouse-5y7x.onrender.com/api',
   withCredentials: true,
 });
 
