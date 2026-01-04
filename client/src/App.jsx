@@ -23,6 +23,7 @@ const App = () => {
   const [items, setItems] = useState([]);
   const [activities, setActivities] = useState([]);
   const [brandFilter, setBrandFilter] = useState('');
+  const [expiryFilter, setExpiryFilter] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [barcodeInput, setBarcodeInput] = useState('');
   const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -34,6 +35,7 @@ const App = () => {
   const [toasts, setToasts] = useState([]);
   const [authLoading, setAuthLoading] = useState(false);
   const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--bg-light', isDarkMode ? '#1e293b' : '#f8fafc');
@@ -51,6 +53,17 @@ const App = () => {
     fetchInventory();
     fetchActivity();
   }, [isAuthenticated]);
+
+  const isExpiringSoon = (expiry) => {
+  if (!isValidDate(expiry)) return false;
+
+  const today = new Date();
+  const threeMonthsFromNow = new Date();
+  threeMonthsFromNow.setMonth(today.getMonth() + 3);
+
+  const expiryDate = new Date(expiry);
+  return expiryDate >= today && expiryDate <= threeMonthsFromNow;
+};
 
   const fetchInventory = async () => {
     setInventoryLoading(true);
@@ -110,6 +123,7 @@ const App = () => {
       setItems([]);
       setActivities([]);
       setActivePage('dashboard');
+      setSidebarOpen(false);
       notify({ title: 'Signed out', message: 'You have been logged out', type: 'info' });
     }
   };
@@ -124,12 +138,12 @@ const App = () => {
     if (existing) {
       notify({
         title: 'Already Exists',
-        message: 'This barcode already exists in inventory. Use edit instead.',
-        type: 'danger',
+        message: 'This barcode already exists in inventory.',
+        type: 'info',
       });
       setEditItem(existing);
-      setEditModalOpen(true);
-      return;
+      // setEditModalOpen(true);
+      // return;
     }
 
     setAddModalOpen(true);
@@ -161,7 +175,7 @@ const App = () => {
 
       const { data } = await apiClient.post('/items', payload);
       setItems((prev) => [data, ...prev]);
-      setAddModalOpen(false);
+      setAddModalOpen(false); 
       setBarcodeInput('');
       notify({ title: 'Success', message: 'Item added to inventory successfully', type: 'success' });
       fetchActivity();
@@ -217,31 +231,43 @@ const App = () => {
     }
   };
 
+  const isValidDate = (value) => {
+  const date = new Date(value);
+  return value && !isNaN(date.getTime());
+};
+
   const filteredItems = useMemo(() => {
     const lowerSearch = searchTerm.trim().toLowerCase();
 
     return items.filter((item) => {
-      if (brandFilter && item.brand !== brandFilter) {
-        return false;
-      }
+      if (expiryFilter && !isExpiringSoon(item.expiry)) return false;
+      if (!expiryFilter && brandFilter && item.brand !== brandFilter) return false;
 
-      if (!lowerSearch) {
-        return true;
-      }
+      if (!lowerSearch) return true;
 
       return (
         item.name.toLowerCase().includes(lowerSearch) ||
+        item.barcode.toLowerCase().includes(lowerSearch) ||
         item.brand.toLowerCase().includes(lowerSearch) ||
         item.location.toLowerCase().includes(lowerSearch)
       );
     });
-  }, [items, brandFilter, searchTerm]);
+  }, [items, brandFilter, searchTerm, expiryFilter]);
 
   const statsByBrand = useMemo(() => {
-    const totals = { MTR: 0, Parasuit: 0, Dabour: 0, '': 0 };
+    const today = new Date();
+  const threeMonthsFromNow = new Date();
+  threeMonthsFromNow.setMonth(today.getMonth() + 3);
+    const totals = { MTR: 0, Parasuit: 0, Dabour: 0, '': 0, 'ExpiringSoon': 0 };
     items.forEach((item) => {
       totals[item.brand] = (totals[item.brand] ?? 0) + Number(item.quantity ?? 0);
       totals[''] += Number(item.quantity ?? 0);
+      if (isValidDate(item.expiry)) {
+      const expiryDate = new Date(item.expiry);
+      if (expiryDate >= today && expiryDate <= threeMonthsFromNow) {
+        totals['ExpiringSoon'] += item?.quantity;
+      }
+    }
     });
     return totals;
   }, [items]);
@@ -259,6 +285,14 @@ const App = () => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => !prev);
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
+
   if (!isAuthenticated) {
     return (
       <>
@@ -270,22 +304,37 @@ const App = () => {
 
   return (
     <div className="app-shell">
-      <Navbar onToggleTheme={() => setIsDarkMode((prev) => !prev)} isDarkMode={isDarkMode} onLogout={handleLogout} />
+      <Navbar
+        onToggleTheme={() => setIsDarkMode((prev) => !prev)}
+        isDarkMode={isDarkMode}
+        onLogout={handleLogout}
+        onToggleSidebar={toggleSidebar}
+      />
       <div className="main-wrapper">
-        <Sidebar activePage={activePage} onNavigate={setActivePage} />
+        <Sidebar
+          activePage={activePage}
+          onNavigate={(page) => {
+            setActivePage(page);
+            closeSidebar();
+          }}
+          isOpen={isSidebarOpen}
+        />
+        {isSidebarOpen && <button type="button" className="sidebar-overlay" aria-label="Close sidebar" onClick={closeSidebar} />}
         <main className="content">
           {activePage === 'dashboard' && (
             <DashboardPage
               statsByBrand={statsByBrand}
               activities={activities}
-              onSelectBrand={(brand) => {
-                setBrandFilter(brand);
+              onSelectBrand={(key) => {
+                if (key === 'ExpiringSoon') {
+                  setExpiryFilter(true);
+                  setBrandFilter('');
+                  notify({ title: 'Expiring Items', message: 'Items expiring within 3 months', type: 'warning' });
+                } else {
+                  setExpiryFilter(false);
+                  setBrandFilter(key);
+                }
                 setActivePage('inventory');
-                notify({
-                  title: 'Filter Applied',
-                  message: `Showing ${brand ? `${brand} items` : 'all items'}`,
-                  type: 'success',
-                });
               }}
             />
           )}
@@ -322,7 +371,7 @@ const App = () => {
           {inventoryLoading && <p>Loading inventory…</p>}
         </main>
       </div>
-      <AddItemModal isOpen={isAddModalOpen} barcode={barcodeInput} onClose={() => setAddModalOpen(false)} onSave={handleSaveNewItem} />
+      <AddItemModal isOpen={isAddModalOpen} item={editItem} barcode={barcodeInput} onClose={() => setAddModalOpen(false)} onSave={handleSaveNewItem} />
       <EditItemModal isOpen={isEditModalOpen} item={editItem} onClose={() => setEditModalOpen(false)} onSave={handleUpdateItem} />
       <ItemDetailsModal
         isOpen={isDetailsModalOpen}

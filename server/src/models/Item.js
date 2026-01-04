@@ -5,7 +5,6 @@ const ItemSchema = new mongoose.Schema(
     barcode: {
       type: String,
       required: true,
-      unique: true,
       uppercase: true,
       trim: true,
     },

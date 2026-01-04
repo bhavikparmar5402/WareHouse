@@ -7,8 +7,8 @@ const NAV_ITEMS = [
   { key: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
-const Sidebar = ({ activePage, onNavigate }) => (
-  <aside className="sidebar">
+const Sidebar = ({ activePage, onNavigate, isOpen }) => (
+  <aside className={`sidebar ${isOpen ? 'active' : ''}`}>
     <ul className="sidebar-menu">
       {NAV_ITEMS.map((item) => (
         <li key={item.key}>

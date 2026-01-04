@@ -18,11 +18,11 @@ const STAT_CARDS = [
     iconClass: 'green',
   },
   {
-    key: '',
-    label: 'All Items',
+    key: 'ExpiringSoon',
+    label: 'Expring soon',
     icon: '⚠️',
     iconClass: 'red',
-  },
+  }
 ];
 
 const STATUS_BADGE_CLASS = {

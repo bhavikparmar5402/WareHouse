@@ -16,10 +16,10 @@ router.post('/', async (req, res, next) => {
   try {
     const payload = req.body;
 
-    const existing = await Item.findOne({ barcode: payload.barcode });
-    if (existing) {
-      return res.status(409).json({ message: 'Item with this barcode already exists' });
-    }
+    // const existing = await Item.findOne({ barcode: payload.barcode });
+    // if (existing) {
+    //   return res.status(409).json({ message: 'Item with this barcode already exists' });
+    // }
 
     const item = await Item.create({
       barcode: payload.barcode,

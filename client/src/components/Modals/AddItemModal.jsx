@@ -10,19 +10,28 @@ const initialFormState = {
   expiry: '',
 };
 
-const AddItemModal = ({ isOpen, barcode, onClose, onSave }) => {
+const AddItemModal = ({ isOpen, item, barcode, onClose, onSave }) => {
   const [form, setForm] = useState(initialFormState);
 
   useEffect(() => {
     if (isOpen) {
-      setForm((prev) => ({
-        ...prev,
-        barcode: barcode ?? '',
-      }));
+      if(item){
+        setForm({
+        ...item,
+        quantity: 0,
+        location: ''
+      });
+      }else{
+
+        setForm((prev) => ({
+          ...prev,
+          barcode: barcode ?? '',
+        }));
+      }
     } else {
       setForm(initialFormState);
     }
-  }, [isOpen, barcode]);
+  }, [isOpen, barcode, item]);
 
   const updateField = (field, value) => {
     setForm((prev) => ({
@@ -93,7 +102,7 @@ const AddItemModal = ({ isOpen, barcode, onClose, onSave }) => {
             </div>
             <div className="form-group">
               <label>Expiry Date*</label>
-              <input type="text" required value={form.expiry} onChange={(event) => updateField('expiry', event.target.value)} />
+              <input type="date" required value={form.expiry} onChange={(event) => updateField('expiry', event.target.value)} />
             </div>
           </form>
         </div>
